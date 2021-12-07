@@ -3,11 +3,12 @@ package app
 import (
 	"context"
 
+	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // AppStorage struct
@@ -28,12 +29,29 @@ func CreateAppStorage(cfg *AppConfig) (as *AppStorage, err error) {
 	return
 }
 
+func (as *AppStorage) FindAllUsers(ctx *gin.Context) (result *Users, err error) {
+	span := trace.SpanFromContext(ctx.Request.Context())
+	_, childSpan := span.TracerProvider().Tracer("TraceApp").Start(ctx.Request.Context(), "Storage")
+	defer childSpan.End()
+
+	childSpan.SetAttributes(attribute.Key("Collection").String("users"))
+	childSpan.SetAttributes(attribute.Key("Method").String("GetUserByEmail"))
+
+	filter := bson.M{}
+	cursor, err := as.mdb.Collection("users").Find(ctx, filter)
+	if err != nil {
+		return
+	}
+
+	result = new(Users)
+	err = cursor.All(ctx, result)
+	return
+}
+
 func (as *AppStorage) GetUserByEmail(ctx context.Context, email string) (u *User, err error) {
-	tr := otel.Tracer("mongodb")
-	_, span := tr.Start(ctx, "mongodb")
+	span := trace.SpanFromContext(ctx)
 	span.SetAttributes(attribute.Key("collection").String("users"))
 	span.SetAttributes(attribute.Key("method").String("GetUserByEmail"))
-	defer span.End()
 
 	u = new(User)
 	err = as.mdb.Collection("users").FindOne(ctx, bson.M{}).Decode(u)

@@ -11,3 +11,6 @@ type User struct {
 	Fname string             `bson:"fname" json:"fname"`
 	Email string             `bson:"email" json:"email"`
 }
+
+// Users array
+type Users = []User

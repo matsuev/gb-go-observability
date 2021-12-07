@@ -25,10 +25,13 @@ func CreateAppRouter(cfg *AppConfig) (ar *AppRouter, err error) {
 
 // traceMiddleware function
 func (r *AppRouter) traceMiddleware(ctx *gin.Context) {
-	tr := otel.Tracer("app-router")
-	_, span := tr.Start(ctx, "request")
-	span.SetAttributes(attribute.Key("request").String(ctx.Request.RequestURI))
+	tr := otel.Tracer("TraceApp")
+	c, span := tr.Start(ctx, "Router")
 	defer span.End()
+
+	span.SetAttributes(attribute.Key("RequestURI").String(ctx.Request.RequestURI))
+
+	ctx.Request = ctx.Request.WithContext(c)
 	ctx.Next()
 }
 
