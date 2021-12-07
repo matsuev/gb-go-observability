@@ -1,19 +1,23 @@
 package app
 
-import (
-	"github.com/gin-gonic/gin"
-)
-
 // TraceApplication struct
 type TraceApplication struct {
-	router *gin.Engine
+	router *AppRouter
+	logger *AppLogger
 }
 
 // Create function
-func Create() (a *TraceApplication) {
+func Create() (a *TraceApplication, err error) {
 	a = new(TraceApplication)
 
-	a.router = gin.Default()
+	// if a.logger, err = CreateLogger(); err != nil {
+	// 	return
+	// }
+
+	if a.router, err = CreateRouter(); err != nil {
+		return
+	}
+
 	return
 }
 

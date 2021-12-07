@@ -8,7 +8,10 @@ import (
 func main() {
 	println("lesson-03")
 
-	TraceApp := app.Create()
+	TraceApp, err := app.Create()
+	if err != nil {
+		log.Fatalln()
+	}
 
 	log.Fatalln(TraceApp.Run())
 }
