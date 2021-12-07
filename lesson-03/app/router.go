@@ -1,57 +1,39 @@
 package app
 
 import (
-	"log"
-	"net/http"
-	"time"
-
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 // AppRouter struct
 type AppRouter struct {
-	router *gin.Engine
-	logger *zap.Logger
+	router     *gin.Engine
+	listenAddr string
 }
 
-// CreateRouter function
-func CreateRouter() (r *AppRouter, err error) {
-	r = new(AppRouter)
-	r.router = gin.Default()
+// CreateAppRouter function
+func CreateAppRouter(cfg *AppConfig) (ar *AppRouter, err error) {
+	ar = new(AppRouter)
 
-	if r.logger, err = zap.NewProduction(); err != nil {
-		return
-	}
+	ar.router = gin.Default()
+	ar.listenAddr = cfg.ListenAddr
 
-	err = r.initRoutes()
+	ar.router.Use(ar.traceMiddleware)
 	return
 }
 
-// initRoutes function
-func (r *AppRouter) initRoutes() (err error) {
-	r.router.GET("/", r.indexHandler)
-	return
+// traceMiddleware function
+func (r *AppRouter) traceMiddleware(ctx *gin.Context) {
+	tr := otel.Tracer("app-router")
+	_, span := tr.Start(ctx, "request")
+	span.SetAttributes(attribute.Key("request").String(ctx.Request.RequestURI))
+	defer span.End()
+	ctx.Next()
 }
 
-// indexHandler function
-func (r *AppRouter) indexHandler(c *gin.Context) {
-	defer func() {
-		if err := r.logger.Sync(); err != nil {
-			log.Println(err)
-		}
-	}()
-
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Ok",
-	})
-
-	r.logger.Info("fetch URL",
-		zap.String("url", c.Request.URL.RawPath),
-		zap.Duration("backoff", time.Second),
-	)
-}
-
+// Run function
 func (r *AppRouter) Run() (err error) {
-	return r.router.Run()
+	err = r.router.Run(r.listenAddr)
+	return
 }

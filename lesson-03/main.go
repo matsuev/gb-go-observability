@@ -6,12 +6,12 @@ import (
 )
 
 func main() {
-	println("lesson-03")
-
-	TraceApp, err := app.Create()
+	AppInstance, err := app.Create()
 	if err != nil {
-		log.Fatalln()
+		log.Printf("msg: %s\n", err)
 	}
 
-	log.Fatalln(TraceApp.Run())
+	if err = AppInstance.Run(); err != nil {
+		log.Printf("msg: %s\n", err)
+	}
 }

@@ -1,27 +1,43 @@
 package app
 
-// TraceApplication struct
-type TraceApplication struct {
-	router *AppRouter
-	logger *AppLogger
+// TracingApp
+type TracingApp struct {
+	tracer  *AppTracer
+	config  *AppConfig
+	router  *AppRouter
+	storage *AppStorage
 }
 
 // Create function
-func Create() (a *TraceApplication, err error) {
-	a = new(TraceApplication)
+func Create() (a *TracingApp, err error) {
+	a = new(TracingApp)
 
-	// if a.logger, err = CreateLogger(); err != nil {
-	// 	return
-	// }
+	a.config = CreateAppConfig()
 
-	if a.router, err = CreateRouter(); err != nil {
+	if a.tracer, err = CreateAppTracer(a.config); err != nil {
 		return
 	}
+
+	if a.router, err = CreateAppRouter(a.config); err != nil {
+		return
+	}
+
+	if a.storage, err = CreateAppStorage(a.config); err != nil {
+		return
+	}
+
+	a.initRoutes()
 
 	return
 }
 
-func (a *TraceApplication) Run() (err error) {
+// initRoutes function
+func (a *TracingApp) initRoutes() {
+	a.router.router.GET("/", a.indexHandler)
+}
+
+// Run function
+func (a *TracingApp) Run() (err error) {
 	err = a.router.Run()
 	return
 }
