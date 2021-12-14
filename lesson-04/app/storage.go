@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.opentelemetry.io/otel/attribute"
@@ -43,11 +44,9 @@ func (as *AppStorage) CreateSpan(ctx context.Context, coll string, method string
 	return childSpan
 }
 
-func (as *AppStorage) FindAllUsers(ctx *gin.Context) (result *Users, err error) {
+func (as *AppStorage) FindAllUsers(ctx *gin.Context, result *Users) (err error) {
 	span := as.CreateSpan(ctx.Request.Context(), "users", "FindAllUsers")
 	defer span.End()
-
-	result = new(Users)
 
 	// if result in cache, then return
 	if err = as.cache.Get(ctx, ctx.Request.RequestURI, &result); err == nil {
@@ -60,6 +59,7 @@ func (as *AppStorage) FindAllUsers(ctx *gin.Context) (result *Users, err error) 
 	if err != nil {
 		return
 	}
+	defer cursor.Close(ctx)
 
 	if err = cursor.All(ctx, result); err != nil {
 		return
@@ -71,11 +71,16 @@ func (as *AppStorage) FindAllUsers(ctx *gin.Context) (result *Users, err error) 
 	return
 }
 
-func (as *AppStorage) GetUserByEmail(ctx *gin.Context, email string) (u *User, err error) {
+func (as *AppStorage) GetUserByEmail(ctx *gin.Context, result *User) (err error) {
 	span := as.CreateSpan(ctx.Request.Context(), "users", "GetUserByEmail")
 	defer span.End()
 
-	u = new(User)
-	err = as.mdb.Collection("users").FindOne(ctx, bson.M{}).Decode(u)
+	filter := bson.D{
+		primitive.E{
+			Key:   "email",
+			Value: result.Email,
+		},
+	}
+	err = as.mdb.Collection("users").FindOne(ctx, filter).Decode(result)
 	return
 }
