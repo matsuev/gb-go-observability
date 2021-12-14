@@ -16,9 +16,22 @@ func (a *TracingApp) indexHandler(ctx *gin.Context) {
 		return
 	}
 
+	if err := a.storage.GetUserByEmail(ctx, user); err != nil {
+		ctx.AbortWithError(http.StatusNoContent, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, user)
+}
+
+// GetUserByUid function
+func (a *TracingApp) GetUserByUid(ctx *gin.Context) {
+	user := new(User)
+	user.UID = ctx.Param("uid")
+
 	log.Printf("%#v\n", user)
 
-	if err := a.storage.GetUserByEmail(ctx, user); err != nil {
+	if err := a.storage.GetUserByUid(ctx, user); err != nil {
 		ctx.AbortWithError(http.StatusNoContent, err)
 		return
 	}

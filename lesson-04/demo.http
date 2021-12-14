@@ -4,3 +4,6 @@ GET http://localhost:16686/
 
 ### Get all users from database
 GET http://localhost:8080/users
+
+### Get user by UID
+GET http://localhost:8080/users/2

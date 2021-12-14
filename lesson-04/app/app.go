@@ -35,6 +35,7 @@ func Create() (a *TracingApp, err error) {
 func (a *TracingApp) initRoutes() {
 	a.router.router.GET("/", a.indexHandler)
 	a.router.router.GET("/users", a.GetAllUsers)
+	a.router.router.GET("/users/:uid", a.GetUserByUid)
 }
 
 // Run function
