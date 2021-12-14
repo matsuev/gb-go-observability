@@ -25,10 +25,10 @@ func CreateAppCache(cfg *AppConfig) (ac *AppCache) {
 
 	ac.cache = cache.New(&cache.Options{
 		Redis:      redisClient,
-		LocalCache: cache.NewTinyLFU(cfg.CacheSize, cfg.CacheTTL),
+		LocalCache: cache.NewTinyLFU(cfg.LocalCacheSize, cfg.LocalCacheTTL),
 	})
 
-	ac.defaultTTL = time.Hour
+	ac.defaultTTL = cfg.RedisTTL
 
 	return
 }
